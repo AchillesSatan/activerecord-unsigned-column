@@ -6,7 +6,7 @@ module ActiveRecord
       config_accessor :primary_key_type
 
       configure do |config|
-        config.primary_key_type = :unsigned_bigint
+        config.primary_key_type = :integer
       end
     end
   end

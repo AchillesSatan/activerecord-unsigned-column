@@ -1,6 +1,13 @@
 module ActiveRecord
   module ConnectionAdapters
     class TableDefinition
+      def unsigned_bigint(*args)
+        options = args.extract_options!
+        column_names = args
+        type = :unsigned_bigint
+        column_names.each { |name| column(name, type, options) }
+      end
+
       def unsigned(*args)
         options = args.extract_options!
         column_names = args
@@ -10,6 +17,13 @@ module ActiveRecord
     end
 
     class Table
+      def unsigned_bigint(*args)
+        options = args.extract_options!
+        options.merge(limit: 8)
+
+        unsigned(args, options)
+      end
+
       def unsigned(*args)
         options = args.extract_options!
         column_names = args
@@ -65,7 +79,8 @@ module ActiveRecord
       alias_method_chain :type_to_sql, :unsigned
 
       NATIVE_DATABASE_TYPES.merge!(
-        :unsigned => { :name => 'int(10) unsigned', :limit => 4 }
+        :unsigned => { :name => 'int(10) unsigned', :limit => 4 },
+        :unsigned_bigint => { :name => 'bigint(20) unsigned' }
       )
     end
   end
