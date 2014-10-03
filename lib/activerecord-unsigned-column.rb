@@ -1,3 +1,6 @@
+require "activerecord-unsigned-column/config"
+require "activerecord-unsigned-column/engine"
+
 module ActiveRecord
   module UnsignedColumn
   end
