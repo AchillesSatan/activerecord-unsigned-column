@@ -1,5 +1,11 @@
+require "activerecord-unsigned-column/config"
+require "activerecord-unsigned-column/engine"
+
 module ActiveRecord
   module UnsignedColumn
+    def self.config
+      ActiveRecord::UnsignedColumn::Config.config
+    end
   end
 end
 
