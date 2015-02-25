@@ -41,27 +41,6 @@ module ActiveRecord
     end
 
     class AbstractMysqlAdapter
-      class Column
-        def simplified_type_with_unsigned(field_type)
-          if field_type =~ /unsigned/i
-            :unsigned
-          else
-            simplified_type_without_unsigned(field_type)
-          end
-        end
-        alias_method_chain :simplified_type, :unsigned
-
-        def type_cast(value)
-          if type == :unsigned
-            return nil if value.nil?
-            return coder.load(value) if encoded?
-            value.to_i rescue value ? 1 : 0
-          else
-            super
-          end
-        end
-      end
-
       def type_to_sql_with_unsigned(type, limit = nil, precision = nil, scale = nil)
         if type == :unsigned
           case limit
@@ -78,10 +57,39 @@ module ActiveRecord
       end
       alias_method_chain :type_to_sql, :unsigned
 
-      NATIVE_DATABASE_TYPES.merge!(
-        :unsigned => { :name => 'int(10) unsigned', :limit => 4 },
-        :unsigned_bigint => { :name => 'bigint(20) unsigned' }
-      )
+      if ActiveRecord::VERSION::STRING < "4.2.0"
+        class Column
+          def simplified_type_with_unsigned(field_type)
+            if field_type =~ /unsigned/i
+              :unsigned
+            else
+              simplified_type_without_unsigned(field_type)
+            end
+          end
+          alias_method_chain :simplified_type, :unsigned
+
+          def type_cast(value)
+            if type == :unsigned
+              return nil if value.nil?
+              return coder.load(value) if encoded?
+              value.to_i rescue value ? 1 : 0
+            else
+              super
+            end
+          end
+        end
+
+        NATIVE_DATABASE_TYPES.merge!(
+          :unsigned => { :name => 'int(10) unsigned', :limit => 4 },
+          :unsigned_bigint => { :name => 'bigint(20) unsigned' }
+        )
+
+      else
+        NATIVE_DATABASE_TYPES.merge!(
+          :unsigned => { :name => 'int(10) unsigned' },
+          :unsigned_bigint => { :name => 'bigint(20) unsigned' }
+        )
+      end
     end
   end
 end
