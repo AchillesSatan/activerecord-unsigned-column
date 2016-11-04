@@ -40,8 +40,8 @@ module ActiveRecord
       end
     end
 
-    class AbstractMysqlAdapter
-      def type_to_sql_with_unsigned(type, limit = nil, precision = nil, scale = nil)
+    module TypeToSql
+      def type_to_sql(type, limit = nil, precision = nil, scale = nil)
         if type == :unsigned
           case limit
           when 1; 'tinyint unsigned'
@@ -52,12 +52,39 @@ module ActiveRecord
           else raise(ActiveRecordError, "No integer type has byte size #{limit}")
           end
         else
-          type_to_sql_without_unsigned(type, limit, precision, scale)
+          super
         end
       end
-      alias_method_chain :type_to_sql, :unsigned
+    end
 
+    module SimplifiedType
+      def simplified_type(field_type)
+        if field_type =~ /unsigned/i
+          :unsigned
+        else
+          super
+        end
+      end
+    end
+
+    class AbstractMysqlAdapter
       if ActiveRecord::VERSION::STRING < "4.2.0"
+        def type_to_sql_with_unsigned(type, limit = nil, precision = nil, scale = nil)
+          if type == :unsigned
+            case limit
+            when 1; 'tinyint unsigned'
+            when 2; 'smallint unsigned'
+            when 3; 'mediumint unsigned'
+            when nil, 4, 10; 'int(10) unsigned'
+            when 5..8; 'bigint unsigned'
+            else raise(ActiveRecordError, "No integer type has byte size #{limit}")
+            end
+          else
+            type_to_sql_without_unsigned(type, limit, precision, scale)
+          end
+        end
+        alias_method_chain :type_to_sql, :unsigned
+
         class Column
           def simplified_type_with_unsigned(field_type)
             if field_type =~ /unsigned/i
@@ -85,6 +112,22 @@ module ActiveRecord
         )
 
       else
+        prepend TypeToSql
+
+        class Column
+          prepend SimplifiedType
+
+          def type_cast(value)
+            if type == :unsigned
+              return nil if value.nil?
+              return coder.load(value) if encoded?
+              value.to_i rescue value ? 1 : 0
+            else
+              super
+            end
+          end
+        end
+
         NATIVE_DATABASE_TYPES.merge!(
           :unsigned => { :name => 'int(10) unsigned' },
           :unsigned_bigint => { :name => 'bigint(20) unsigned' }
