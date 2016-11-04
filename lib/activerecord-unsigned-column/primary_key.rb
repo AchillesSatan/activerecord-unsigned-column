@@ -26,16 +26,19 @@ module ActiveRecord
       alias :belongs_to :references
     end
 
-    class AbstractMysqlAdapter
-      def type_to_sql_with_primary_key(type, limit = nil, precision = nil, scale = nil)
+    module TypeToSql
+      def type_to_sql(type, limit = nil, precision = nil, scale = nil)
         if type == :primary_key
           column_type_sql = type_to_sql_without_primary_key(UnsignedColumn.config.primary_key_type, limit, precision, scale)
           column_type_sql << ' DEFAULT NULL auto_increment PRIMARY KEY'
         else
-          type_to_sql_without_primary_key(type, limit, precision, scale)
+          super
         end
       end
-      alias_method_chain :type_to_sql, :primary_key
+    end
+
+    class AbstractMysqlAdapter
+      prepend TypeToSql
     end
   end
 end
