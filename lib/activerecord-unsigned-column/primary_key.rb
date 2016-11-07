@@ -27,7 +27,7 @@ module ActiveRecord
     end
 
     module TypeToSql
-      def type_to_sql(type, limit = nil, precision = nil, scale = nil)
+      def type_to_sql(type, limit = nil, precision = nil, scale = nil, unsigned = nil)
         if type == :primary_key
           column_type_sql = type_to_sql_without_primary_key(UnsignedColumn.config.primary_key_type, limit, precision, scale)
           column_type_sql << ' DEFAULT NULL auto_increment PRIMARY KEY'

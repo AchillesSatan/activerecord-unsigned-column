@@ -41,7 +41,7 @@ module ActiveRecord
     end
 
     module TypeToSql
-      def type_to_sql(type, limit = nil, precision = nil, scale = nil)
+      def type_to_sql(type, limit = nil, precision = nil, scale = nil, unsigned = nil)
         if type == :unsigned
           case limit
           when 1; 'tinyint unsigned'
